@@ -90,6 +90,9 @@ class NeuralAgent(object):
         self.last_img = None
         self.last_action = None
 
+        # Exponential moving average of runtime performance.
+        self.steps_sec_ema = 0.
+
     def _open_results_file(self):
         if not self.recording:
             return
@@ -259,11 +262,10 @@ class NeuralAgent(object):
         May be overridden if a subclass needs to train the network
         differently.
         """
-        states, actions, rewards, next_states, terminals = \
+        imgs, actions, rewards, terminals = \
                                 self.data_set.random_batch(
                                     self.network.batch_size)
-        return self.network.train(states, actions, rewards,
-                                  next_states, terminals)
+        return self.network.train(imgs, actions, rewards, terminals)
 
 
     def end_episode(self, reward, terminal=True):
@@ -300,8 +302,12 @@ class NeuralAgent(object):
                                      np.clip(reward, -1, 1),
                                      True)
 
-            logging.info("steps/second: {:.2f}".format(\
-                            self.step_counter/total_time))
+            rho = 0.98
+            self.steps_sec_ema *= rho
+            self.steps_sec_ema += (1. - rho) * (self.step_counter/total_time)
+
+            logging.info("steps/second: {:.2f}, avg: {:.2f}".format(
+                self.step_counter/total_time, self.steps_sec_ema))
 
             if self.batch_counter > 0:
                 self._update_learning_file()
@@ -328,13 +334,14 @@ class NeuralAgent(object):
         holdout_size = 3200
 
         if self.holdout_data is None and len(self.data_set) > holdout_size:
-            self.holdout_data = self.data_set.random_batch(holdout_size)[0]
+            imgs, _, _, _ = self.data_set.random_batch(holdout_size)
+            self.holdout_data = imgs[:, :self.phi_length]
 
         holdout_sum = 0
         if self.holdout_data is not None:
             for i in range(holdout_size):
                 holdout_sum += np.max(
-                    self.network.q_vals(self.holdout_data[i, ...]))
+                    self.network.q_vals(self.holdout_data[i]))
 
         self._update_results_file(epoch, self.episode_counter,
                                   holdout_sum / holdout_size)
