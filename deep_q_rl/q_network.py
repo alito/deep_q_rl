@@ -105,8 +105,10 @@ class DeepQLearner:
                           actions.reshape((-1, 1))).astype(theano.config.floatX)
 
         if self.use_double:
-            maxaction = T.argmax(q_vals, axis=1, keepdims=False)
-            temptargets = next_q_vals[T.arange(batch_size),maxaction].reshape((-1, 1))
+            # also get q values for next_states since we need to pick the action from that
+            q_vals_next_state_current_evaluator = lasagne.layers.get_output(self.l_out, next_states / input_scale)
+            maxaction = T.argmax(q_vals_next_state_current_evaluator, axis=1, keepdims=False)
+            temptargets = next_q_vals[T.arange(batch_size), maxaction].reshape((-1, 1))
             target = (rewards +
                       (T.ones_like(terminalsX) - terminalsX) *
                       self.discount * temptargets)
