@@ -1,2 +1,12 @@
 *.pyc
 roms
+
+# ignore experiment directories
+*_201[5678]-*/
+trainedmodels/
+results/
+parameters/
+output/
+diffs/
+learning/
+/deep_q_rl/*.txt
