@@ -195,7 +195,7 @@ def launch(args, defaults, description):
     import numpy
     import theano
 
-    import q_network
+    from . import q_network
 
     logging.basicConfig(level=logging.INFO)
     parameters = process_args(args, defaults, description)
@@ -293,8 +293,8 @@ def launch(args, defaults, description):
         handle.close()
 
     if parameters.framework == 'ale':
-        import ale_agent
-        import ale_experiment
+        from . import ale_agent
+        from . import ale_experiment
 
         agent = ale_agent.NeuralAgent(network,
                                       parameters.epsilon_start,
@@ -310,7 +310,6 @@ def launch(args, defaults, description):
         experiment = ale_experiment.ALEExperiment(ale, agent,
                                                   defaults.RESIZED_WIDTH,
                                                   defaults.RESIZED_HEIGHT,
-                                                  parameters.resize_method,
                                                   parameters.epochs,
                                                   parameters.steps_per_epoch,
                                                   parameters.steps_per_test,

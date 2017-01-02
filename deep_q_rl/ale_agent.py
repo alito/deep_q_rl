@@ -13,7 +13,7 @@ import logging
 
 import numpy as np
 
-import ale_data_set
+from . import ale_data_set
 
 import sys
 sys.setrecursionlimit(10000)

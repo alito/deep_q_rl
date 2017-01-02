@@ -6,6 +6,8 @@ Author: Nathan Sprague
 """
 import logging
 
+import numpy
+
 from .experiment import Experiment
 
 class ALEExperiment(Experiment):
@@ -18,7 +20,7 @@ class ALEExperiment(Experiment):
         self.ale = ale
         self.min_action_set = ale.getMinimalActionSet()
         self.width, self.height = ale.getScreenDims()
-        self._ale_buffer = None
+        self._ale_buffer = numpy.empty((self.height, self.width), dtype=numpy.uint8)
 
     def screen_size(self):
         return self.width, self.height
@@ -30,7 +32,7 @@ class ALEExperiment(Experiment):
         return self.ale.lives()
 
     def reset_game(self):
-        self.ale.reset()
+        self.ale.reset_game()
 
     def map_action(self, action):
         return self.min_action_set[action]

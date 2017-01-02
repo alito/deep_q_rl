@@ -17,7 +17,8 @@ import lasagne
 import numpy as np
 import theano
 import theano.tensor as T
-from updates import deepmind_rmsprop
+
+from .updates import deepmind_rmsprop
 
 
 class DeepQLearner:
