@@ -5,17 +5,11 @@ run_nips.py or run_nature.py.
 
 """
 import os, sys
-import argparse
 import logging
 import time
-import ale_python_interface
-import cPickle
-import numpy as np
-import theano
 
-import ale_experiment
-import ale_agent
-import q_network
+DefaultFramework = 'ale'
+
 
 def process_args(args, defaults, description):
     """
@@ -26,9 +20,15 @@ def process_args(args, defaults, description):
                the required default command line values.
     description - a string to display at the top of the help message.
     """
+
+    import argparse
+
     parser = argparse.ArgumentParser(description=description)
+    parser.add_argument('-f', '--framework', dest="framework", default=DefaultFramework,
+                        choices=['ale','gym'],
+                        help="Framework to run under ('gym' or 'ale') (default: %(default)s)")
     parser.add_argument('-r', '--rom', dest="rom", default=defaults.ROM,
-                        help='ROM to run (default: %(default)s)')
+                        help='ROM or environment to run (default: %(default)s)')
     parser.add_argument('-e', '--epochs', dest="epochs", type=int,
                         default=defaults.EPOCHS,
                         help='Number of training epochs (default: %(default)s)')
@@ -190,21 +190,27 @@ def launch(args, defaults, description):
     """
     Execute a complete training run.
     """
+    import cPickle
+
+    import numpy
+    import theano
+
+    import q_network
 
     logging.basicConfig(level=logging.INFO)
     parameters = process_args(args, defaults, description)
 
-
-    if parameters.rom.endswith('.bin'):
-        rom = parameters.rom
-    else:
-        rom = "%s.bin" % parameters.rom
-    full_rom_path = os.path.join(defaults.BASE_ROM_PATH, rom)
+    if parameters.framework == 'ale':
+        if parameters.rom.endswith('.bin'):
+            rom = parameters.rom
+        else:
+            rom = "%s.bin" % parameters.rom
+        full_rom_path = os.path.join(defaults.BASE_ROM_PATH, rom)
 
     if parameters.deterministic:
-        rng = np.random.RandomState(123456)
+        rng = numpy.random.RandomState(123456)
     else:
-        rng = np.random.RandomState()
+        rng = numpy.random.RandomState()
 
     if parameters.cudnn_deterministic:
         theano.config.dnn.conv.algo_bwd = 'deterministic'
@@ -216,40 +222,54 @@ def launch(args, defaults, description):
         time_str = time.strftime("_%Y-%m-%d-%H-%M")
         experiment_directory = parameters.experiment_prefix + time_str
 
-
-    ale = ale_python_interface.ALEInterface()
-    ale.setInt('random_seed', rng.randint(1000))
-
-    if parameters.display_screen:
-        if sys.platform == 'darwin':
-            import pygame
-            pygame.init()
-            ale.setBool('sound', False) # Sound doesn't work on OSX
-
-    ale.setBool('display_screen', parameters.display_screen)
-    ale.setFloat('repeat_action_probability',
-                 parameters.repeat_action_probability)
-
     if parameters.record_video:
         video_directory = os.path.join(experiment_directory, 'video')
         if not os.path.isdir(video_directory):
             os.makedirs(video_directory)
 
 
-        ale.setString('record_screen_dir', video_directory)
+    if parameters.framework == 'ale':
+        import ale_python_interface
 
-        if sys.platform != 'darwin':
-            ale.setBool('sound', True)
-            ale.setString("record_sound_filename", os.path.join(video_directory, "sound.wav"))
-            # "We set fragsize to 64 to ensure proper sound sync"
-            # (that's what videoRecordingExample.cpp in ALE says. I don't really know what it means)
-            ale.setInt("fragsize", 64)
+        ale = ale_python_interface.ALEInterface()
+        ale.setInt('random_seed', rng.randint(1000))
 
-    ale.loadROM(full_rom_path)
+        if parameters.display_screen:
+            if sys.platform == 'darwin':
+                import pygame
+                pygame.init()
+                ale.setBool('sound', False) # Sound doesn't work on OSX
 
-    num_actions = len(ale.getMinimalActionSet())
+        ale.setBool('display_screen', parameters.display_screen)
+        ale.setFloat('repeat_action_probability',
+                     parameters.repeat_action_probability)
+
+        if parameters.record_video:
+
+            ale.setString('record_screen_dir', video_directory)
+
+            if sys.platform != 'darwin':
+                ale.setBool('sound', True)
+                ale.setString("record_sound_filename", os.path.join(video_directory, "sound.wav"))
+                # "We set fragsize to 64 to ensure proper sound sync"
+                # (that's what videoRecordingExample.cpp in ALE says. I don't really know what it means)
+                ale.setInt("fragsize", 64)
+
+        ale.loadROM(full_rom_path)
+
+        num_actions = len(ale.getMinimalActionSet())
+
+    else:
+        # 'gym'
+        import gym
+
+        env = gym.make(parameters.rom)
+        env = gym.wrapper.Monitor(env, experiment_directory)
+        env.seed(rng.randint(1000))
+        num_actions = env.action_space.n
 
     if parameters.nn_file is None:
+
         network = q_network.DeepQLearner(defaults.RESIZED_WIDTH,
                                          defaults.RESIZED_HEIGHT,
                                          num_actions,
@@ -270,32 +290,37 @@ def launch(args, defaults, description):
     else:
         handle = open(parameters.nn_file, 'r')
         network = cPickle.load(handle)
+        handle.close()
 
-    agent = ale_agent.NeuralAgent(network,
-                                  parameters.epsilon_start,
-                                  parameters.epsilon_min,
-                                  parameters.epsilon_decay,
-                                  parameters.replay_memory_size,
-                                  experiment_directory,
-                                  parameters.replay_start_size,
-                                  parameters.update_frequency,
-                                  rng,
-                                  recording=parameters.recording)
+    if parameters.framework == 'ale':
+        import ale_agent
+        import ale_experiment
 
-    experiment = ale_experiment.ALEExperiment(ale, agent,
-                                              defaults.RESIZED_WIDTH,
-                                              defaults.RESIZED_HEIGHT,
-                                              parameters.resize_method,
-                                              parameters.epochs,
-                                              parameters.steps_per_epoch,
-                                              parameters.steps_per_test,
-                                              parameters.frame_skip,
-                                              parameters.death_ends_episode,
-                                              parameters.max_start_nullops,
-                                              rng,
-                                              length_in_episodes=parameters.episodes)
+        agent = ale_agent.NeuralAgent(network,
+                                      parameters.epsilon_start,
+                                      parameters.epsilon_min,
+                                      parameters.epsilon_decay,
+                                      parameters.replay_memory_size,
+                                      experiment_directory,
+                                      parameters.replay_start_size,
+                                      parameters.update_frequency,
+                                      rng,
+                                      recording=parameters.recording)
 
-    experiment.run()
+        experiment = ale_experiment.ALEExperiment(ale, agent,
+                                                  defaults.RESIZED_WIDTH,
+                                                  defaults.RESIZED_HEIGHT,
+                                                  parameters.resize_method,
+                                                  parameters.epochs,
+                                                  parameters.steps_per_epoch,
+                                                  parameters.steps_per_test,
+                                                  parameters.frame_skip,
+                                                  parameters.death_ends_episode,
+                                                  parameters.max_start_nullops,
+                                                  rng,
+                                                  length_in_episodes=parameters.episodes)
+
+        experiment.run()
 
 
 
