@@ -9,8 +9,13 @@ import numpy as np
 import cv2
 
 
+# Number of rows to crop off the bottom of the (downsampled) screen.
+# This is appropriate for breakout, but it may need to be modified
+# for other games.
+CROP_OFFSET = 8
+
 class Experiment(object):
-    def __init__(self, agent, resized_width, resized_height,
+    def __init__(self, agent, resized_width, resized_height, resize_method, 
                  num_epochs, epoch_length, test_length,
                  frame_skip, death_ends_episode, max_start_nullops, rng,
                  length_in_episodes=False):
@@ -22,6 +27,7 @@ class Experiment(object):
         self.death_ends_episode = death_ends_episode
         self.resized_width = resized_width
         self.resized_height = resized_height
+        self.resize_method = resize_method
 
         self.buffer_length = 2
         self.buffer_count = 0
@@ -194,7 +200,27 @@ class Experiment(object):
     def resize_image(self, image):
         """ Appropriately resize a single image """
 
-        return cv2.resize(image,
+        if self.resize_method == 'crop':
+            # resize keeping aspect ratio
+            width, height = self.screen_size()
+
+            resize_height = int(round(
+                float(height) * self.resized_width / width))
+
+            resized = cv2.resize(image,
+                                 (self.resized_width, resize_height),
+                                 interpolation=cv2.INTER_LINEAR)
+
+            # Crop the part we want
+            crop_y_cutoff = resize_height - CROP_OFFSET - self.resized_height
+            cropped = resized[crop_y_cutoff:
+                              crop_y_cutoff + self.resized_height, :]
+
+            return cropped
+        elif self.resize_method == 'scale':
+            return cv2.resize(image,
                               (self.resized_width, self.resized_height),
                               interpolation=cv2.INTER_LINEAR)
 
+        else:
+            raise ValueError('Unrecognized image resize method.')

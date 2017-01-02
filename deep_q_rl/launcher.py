@@ -310,6 +310,7 @@ def launch(args, defaults, description):
         experiment = ale_experiment.ALEExperiment(ale, agent,
                                                   defaults.RESIZED_WIDTH,
                                                   defaults.RESIZED_HEIGHT,
+                                                  parameters.resize_method,
                                                   parameters.epochs,
                                                   parameters.steps_per_epoch,
                                                   parameters.steps_per_test,

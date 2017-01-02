@@ -11,11 +11,12 @@ import numpy
 from .experiment import Experiment
 
 class ALEExperiment(Experiment):
-    def __init__(self, ale, agent, resized_width, resized_height,
+    def __init__(self, ale, agent, resized_width, resized_height, resize_method,
                  num_epochs, epoch_length, test_length,
                  frame_skip, death_ends_episode, max_start_nullops, rng,
                  length_in_episodes=False):
-        super(ALEExperiment, self).__init__(agent, resized_width, resized_height, num_epochs, epoch_length,
+        super(ALEExperiment, self).__init__(agent, resized_width, resized_height, resize_method, 
+            num_epochs, epoch_length,
             test_length, frame_skip, death_ends_episode, max_start_nullops, rng, length_in_episodes)
         self.ale = ale
         self.min_action_set = ale.getMinimalActionSet()
