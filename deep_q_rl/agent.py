@@ -13,7 +13,7 @@ import logging
 
 import numpy as np
 
-from . import ale_data_set
+from . import data_set
 
 import sys
 sys.setrecursionlimit(10000)
@@ -55,14 +55,14 @@ class NeuralAgent(object):
         self.num_actions = self.network.num_actions
 
 
-        self.data_set = ale_data_set.DataSet(width=self.image_width,
+        self.data_set = data_set.DataSet(width=self.image_width,
                                              height=self.image_height,
                                              rng=rng,
                                              max_steps=self.replay_memory_size,
                                              phi_length=self.phi_length)
 
         # just needs to be big enough to create phi's
-        self.test_data_set = ale_data_set.DataSet(width=self.image_width,
+        self.test_data_set = data_set.DataSet(width=self.image_width,
                                                   height=self.image_height,
                                                   rng=rng,
                                                   max_steps=self.phi_length * 2,

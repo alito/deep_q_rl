@@ -292,21 +292,20 @@ def launch(args, defaults, description):
         network = cPickle.load(handle)
         handle.close()
 
+    from . import agent
+    agent = agent.NeuralAgent(network,
+                                  parameters.epsilon_start,
+                                  parameters.epsilon_min,
+                                  parameters.epsilon_decay,
+                                  parameters.replay_memory_size,
+                                  experiment_directory,
+                                  parameters.replay_start_size,
+                                  parameters.update_frequency,
+                                  rng,
+                                  recording=parameters.recording)
+
     if parameters.framework == 'ale':
-        from . import ale_agent
         from . import ale_experiment
-
-        agent = ale_agent.NeuralAgent(network,
-                                      parameters.epsilon_start,
-                                      parameters.epsilon_min,
-                                      parameters.epsilon_decay,
-                                      parameters.replay_memory_size,
-                                      experiment_directory,
-                                      parameters.replay_start_size,
-                                      parameters.update_frequency,
-                                      rng,
-                                      recording=parameters.recording)
-
         experiment = ale_experiment.ALEExperiment(ale, agent,
                                                   defaults.RESIZED_WIDTH,
                                                   defaults.RESIZED_HEIGHT,
@@ -321,7 +320,6 @@ def launch(args, defaults, description):
                                                   length_in_episodes=parameters.episodes)
 
         experiment.run()
-
 
 
 if __name__ == '__main__':
