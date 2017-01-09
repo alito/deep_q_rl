@@ -6,10 +6,14 @@ Q-learning algorithm described in:
 [Playing Atari with Deep Reinforcement Learning](http://arxiv.org/abs/1312.5602)
 Volodymyr Mnih, Koray Kavukcuoglu, David Silver, Alex Graves, Ioannis
 Antonoglou, Daan Wierstra, Martin Riedmiller
-
-and 
+,
 
 Mnih, Volodymyr, et al. "Human-level control through deep reinforcement learning." Nature 518.7540 (2015): 529-533.
+
+and
+
+[Deep Reinforcement Learning with Double Q-learning](https://arxiv.org/abs/1509.06461)
+Hado van Hasselt, Arthur Guez and David Silver. 
 
 Here is a video showing a trained network playing breakout (using an earlier version of the code):
 
@@ -21,25 +25,31 @@ Here is a video showing a trained network playing breakout (using an earlier ver
 * OpenCV
 * [Theano](http://deeplearning.net/software/theano/) ([https://github.com/Theano/Theano](https://github.com/Theano/Theano))
 * [Lasagne](http://lasagne.readthedocs.org/en/latest/) ([https://github.com/Lasagne/Lasagne](https://github.com/Lasagne/Lasagne)
-* [Pylearn2](http://deeplearning.net/software/pylearn2/) ([https://github.com/lisa-lab/pylearn2](https://github.com/lisa-lab/pylearn2))
 * [Arcade Learning Environment](http://www.arcadelearningenvironment.org/) ([https://github.com/mgbellemare/Arcade-Learning-Environment](https://github.com/mgbellemare/Arcade-Learning-Environment))
+or
+* [Gym](https://gym.openai.com/) ([https://gym.openai.com/](https://gym.openai.com/))
 
 The script `dep_script.sh` can be used to install all dependencies under Ubuntu.
 
 
 # Running
 
-Use the scripts `run_nips.py` or `run_nature.py` to start all the necessary processes:
+Use the scripts `run_nips.py`,  `run_nature.py` or `run_double.py` to start all the necessary processes:
 
 `$ ./run_nips.py --rom breakout`
 
 `$ ./run_nature.py --rom breakout`
 
+or to use the Gym enviornment:
+
+`$ ./run_nature -f gym --rom BreakoutNoFrameskip-v3` (using the NoFrameskip-v3 versions will make the environment match the behaviour we see from direct access)
+
 The `run_nips.py` script uses parameters consistent with the original
 NIPS workshop paper.  This code should take 2-4 days to complete.  The
 `run_nature.py` script uses parameters consistent with the Nature
 paper.  The final policies should be better, but it will take 6-10
-days to finish training.
+days to finish training. `run_double.py` uses double DQN. It should 
+produce even better policies than the Nature version.
 
 Either script will store output files in a folder prefixed with the
 name of the ROM.  Pickled version of the network objects are stored

@@ -147,6 +147,8 @@ class Experiment(object):
         reward = 0
         for _ in range(self.frame_skip):
             reward += self.act(action)
+            if self.game_over():
+                break
 
         return reward
 

@@ -259,14 +259,22 @@ def launch(args, defaults, description):
 
         num_actions = len(ale.getMinimalActionSet())
 
+        environment = ale
+
     else:
         # 'gym'
         import gym
 
-        env = gym.make(parameters.rom)
-        env = gym.wrapper.Monitor(env, experiment_directory)
-        env.seed(rng.randint(1000))
-        num_actions = env.action_space.n
+        # from gym import wrappers
+
+        environment = gym.make(parameters.rom)
+
+        # The monitor wrapper doesn't like part-way resets at the moment, so we'll rely on our
+        # own recordings for now
+        #environment = wrappers.Monitor(environment, experiment_directory)
+        environment.seed(rng.randint(1000))
+        num_actions = environment.action_space.n
+
 
     if parameters.nn_file is None:
 
@@ -305,21 +313,27 @@ def launch(args, defaults, description):
                                   recording=parameters.recording)
 
     if parameters.framework == 'ale':
-        from . import ale_experiment
-        experiment = ale_experiment.ALEExperiment(ale, agent,
-                                                  defaults.RESIZED_WIDTH,
-                                                  defaults.RESIZED_HEIGHT,
-                                                  parameters.resize_method,
-                                                  parameters.epochs,
-                                                  parameters.steps_per_epoch,
-                                                  parameters.steps_per_test,
-                                                  parameters.frame_skip,
-                                                  parameters.death_ends_episode,
-                                                  parameters.max_start_nullops,
-                                                  rng,
-                                                  length_in_episodes=parameters.episodes)
+        from . import ale_experiment 
+        experiment_class = ale_experiment.ALEExperiment
+    else:
+        from . import gym_experiment
+        experiment_class = gym_experiment.GymExperiment
 
-        experiment.run()
+
+    experiment = experiment_class(environment, agent,
+                                  defaults.RESIZED_WIDTH,
+                                  defaults.RESIZED_HEIGHT,
+                                  parameters.resize_method,
+                                  parameters.epochs,
+                                  parameters.steps_per_epoch,
+                                  parameters.steps_per_test,
+                                  parameters.frame_skip,
+                                  parameters.death_ends_episode,
+                                  parameters.max_start_nullops,
+                                  rng,
+                                  length_in_episodes=parameters.episodes)
+
+    experiment.run()
 
 
 if __name__ == '__main__':
