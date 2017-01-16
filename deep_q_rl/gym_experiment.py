@@ -10,9 +10,6 @@ class GymExperiment(Experiment):
                  num_epochs, epoch_length, test_length,
                  frame_skip, death_ends_episode, max_start_nullops, rng,
                  length_in_episodes=False):
-        if death_ends_episode:
-            logging.warn("The gym environment doesn't return number of lives, so we only know when the game is over. Disabling death_ends_episode")
-            death_ends_episode = False
         super(GymExperiment, self).__init__(agent, resized_width, resized_height, resize_method, 
             num_epochs, epoch_length, test_length, frame_skip, death_ends_episode, 
             max_start_nullops, rng, length_in_episodes)
@@ -35,7 +32,7 @@ class GymExperiment(Experiment):
         """
         We don't know, so just return one life unless the game is over
         """
-        return 0 if self.done else 1
+        return self._lives
 
     def reset_game(self):
         self.environment.reset()
@@ -53,6 +50,8 @@ class GymExperiment(Experiment):
         observation, reward, done, info = self.environment.step(action)
 
         self.done = done
+        # Gym started putting the number of lives left in the info
+        self._lives = info.get('ale.lives', 0 if done else 1)
         cv2.cvtColor(observation, cv2.COLOR_RGB2GRAY, dst=self._internal_buffer)
 
         return reward, self._internal_buffer
