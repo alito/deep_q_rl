@@ -19,7 +19,7 @@ def run_watch(args):
     parameters, unknown = parser.parse_known_args(args)
 
     
-    command = ['./run_nature.py', '--steps-per-epoch', '0']
+    command = ['./run_double.py', '--steps-per-epoch', '0']
     if parameters.networkfile[0].lower() != 'none':
         command.extend(['--nn-file', parameters.networkfile[0]])
     if parameters.screen:
