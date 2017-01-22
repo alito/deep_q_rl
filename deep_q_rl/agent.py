@@ -96,8 +96,9 @@ class NeuralAgent(object):
     def _open_results_file(self):
         if not self.recording:
             return
-        logging.info("OPENING " + self.exp_dir + '/results.csv')
-        self.results_file = open(self.exp_dir + '/results.csv', 'w', 0)
+        filename = os.path.join(self.exp_dir, 'results.csv')
+        logging.info("OPENING %s" % filename )
+        self.results_file = open(filename, 'w', 0)
         self.results_file.write(\
             'epoch,num_episodes,total_reward,reward_per_epoch,best_reward,mean_q\n')
         self.results_file.flush()
@@ -105,7 +106,7 @@ class NeuralAgent(object):
     def _open_learning_file(self):
         if not self.recording:
             return
-        self.learning_file = open(self.exp_dir + '/learning.csv', 'w', 0)
+        self.learning_file = open(os.path.join(self.exp_dir, 'learning.csv'), 'w', 0)
         self.learning_file.write('mean_loss,epsilon\n')
         self.learning_file.flush()
 
@@ -179,19 +180,6 @@ class NeuralAgent(object):
             with open(diff_filename, 'w') as diff_file:
                 diff_file.write(gitdiff)
                 diff_file.write('\n')
-
-
-    def _show_phis(self, phi1, phi2):
-        import matplotlib.pyplot as plt
-        for p in range(self.phi_length):
-            plt.subplot(2, self.phi_length, p+1)
-            plt.imshow(phi1[p, :, :], interpolation='none', cmap="gray")
-            plt.grid(color='r', linestyle='-', linewidth=1)
-        for p in range(self.phi_length):
-            plt.subplot(2, self.phi_length, p+5)
-            plt.imshow(phi2[p, :, :], interpolation='none', cmap="gray")
-            plt.grid(color='r', linestyle='-', linewidth=1)
-        plt.show()
 
     def step(self, reward, observation):
         """
@@ -318,8 +306,7 @@ class NeuralAgent(object):
     def finish_epoch(self, epoch):
         if not self.recording:
             return
-        net_file = open(self.exp_dir + '/network_file_' + str(epoch) + \
-                        '.pkl', 'w')
+        net_file = open(os.path.join(self.exp_dir, 'network_file_%s.pkl' % epoch), 'w')
         cPickle.dump(self.network, net_file, -1)
         net_file.close()
 
