@@ -83,7 +83,7 @@ def process_args(args, defaults, description):
                         help='Discount rate')
     parser.add_argument('--epsilon-start', dest="epsilon_start",
                         type=float, default=defaults.EPSILON_START,
-                        help=('Starting value for epsilon. ' +
+                        help=('Starting value for epsilon (rate of random actions). ' +
                               '(default: %(default)s)'))
     parser.add_argument('--epsilon-min', dest="epsilon_min",
                         type=float, default=defaults.EPSILON_MIN,
@@ -159,6 +159,10 @@ def process_args(args, defaults, description):
         action="store_true",
         help=('This changes the lengths of training epochs and test ' +
         'epochs to be measured in episodes (games) instead of steps'))
+    parser.add_argument('--test-epsilon', dest="test_epsilon", default=defaults.TEST_EPSILON, 
+        type=float,
+        help=('Set the rate of random actions (epsilon) to be used during ' +
+        'testing epochs'))
 
 
     parameters = parser.parse_args(args)

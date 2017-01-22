@@ -22,8 +22,8 @@ class NeuralAgent(object):
 
     def __init__(self, q_network, epsilon_start, epsilon_min,
                  epsilon_decay, replay_memory_size, experiment_directory,
-                 replay_start_size, update_frequency, rng, 
-                 recording=True):
+                 replay_start_size, update_frequency, rng,
+                 recording=True, test_epsilon=0.05):
 
         self.results_file = self.learning_file = None
         self.best_epoch_reward = None
@@ -32,6 +32,7 @@ class NeuralAgent(object):
         self.epsilon_start = epsilon_start
         self.epsilon_min = epsilon_min
         self.epsilon_decay = epsilon_decay
+        self.test_epsilon = test_epsilon
         self.replay_memory_size = replay_memory_size
         self.replay_start_size = replay_start_size
         self.update_frequency = update_frequency
@@ -199,7 +200,7 @@ class NeuralAgent(object):
         #TESTING---------------------------
         if self.testing:
             self.episode_reward += reward
-            action = self._choose_action(self.test_data_set, .05,
+            action = self._choose_action(self.test_data_set, self.test_epsilon,
                                          observation, np.clip(reward, -1, 1))
 
         #NOT TESTING---------------------------

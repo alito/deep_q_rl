@@ -57,6 +57,7 @@ class Defaults:
     DETERMINISTIC = True
     CUDNN_DETERMINISTIC = False
     USE_DOUBLE = False
+    TEST_EPSILON = 0.05
 
 if __name__ == "__main__":
     launcher.launch(sys.argv[1:], Defaults, __doc__)
